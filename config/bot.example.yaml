@@ -1,0 +1,27 @@
+ble:
+  # Use either device_address (preferred) or device_name.
+  device_address: "AA:BB:CC:DD:EE:FF"
+  device_name: null
+  pin: null
+
+  scan_timeout_s: 10
+  auto_reconnect: true
+  max_reconnect_attempts: 0
+
+command_prefix: "!"
+
+# Optional bot ignore list.
+ignore_senders:
+  - "my-bot-node-id"
+
+# Bot command rules per channel.
+# Keys are MeshCore channel indexes as strings ("0", "1", ...).
+# "*" is a fallback for any channel index.
+channel_rules:
+  "0":
+    ping: "pong"
+    status: "MeshCore bot online"
+  "1":
+    help: "Commands: !help, !ping"
+  "*":
+    echo: "I hear you"
