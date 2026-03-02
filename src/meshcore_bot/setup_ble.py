@@ -114,11 +114,11 @@ def _build_config(
         "command_prefix": "!",
         "ignore_senders": ["my-bot-node-id"],
         "channel_rules": {
-            "0": {
+            "General": {
                 "ping": "pong",
                 "status": "MeshCore bot online",
             },
-            "1": {
+            "Ops": {
                 "help": "Commands: !help, !ping",
             },
             "*": {

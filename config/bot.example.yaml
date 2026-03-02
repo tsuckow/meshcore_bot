@@ -15,13 +15,13 @@ ignore_senders:
   - "my-bot-node-id"
 
 # Bot command rules per channel.
-# Keys are MeshCore channel indexes as strings ("0", "1", ...).
-# "*" is a fallback for any channel index.
+# Keys are MeshCore channel names.
+# "*" is a fallback for any channel.
 channel_rules:
-  "0":
+  "General":
     ping: "pong"
     status: "MeshCore bot online"
-  "1":
+  "Ops":
     help: "Commands: !help, !ping"
   "*":
     echo: "I hear you"

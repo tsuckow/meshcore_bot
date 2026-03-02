@@ -15,7 +15,11 @@ class ResponseEngine:
         if self.ignore_senders and msg.sender in self.ignore_senders:
             return None
 
-        rules = self.channel_rules.get(msg.channel) or self.channel_rules.get("*")
+        rules = self.channel_rules.get(msg.channel_name) if msg.channel_name else None
+        if not rules:
+            rules = self.channel_rules.get(msg.channel)
+        if not rules:
+            rules = self.channel_rules.get("*")
         if not rules:
             return None
 

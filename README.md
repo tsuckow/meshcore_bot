@@ -12,8 +12,11 @@ A Python bot that connects to a MeshCore companion node over BLE and auto-respon
 
 ## Channel rules
 
-`meshcore` reports channel messages by index (`channel_idx`).
-Use channel indexes as string keys in `channel_rules`, e.g. `"0"`, `"1"`.
+Use channel names as keys in `channel_rules`, e.g. `"General"`, `"Ops"`.
+Incoming MeshCore events provide `channel_idx`; on connect, the bot queries the
+device for channel metadata and maps `channel_idx -> channel_name` using
+`send_device_query()` + `get_channel(idx)`.
+`"*"` remains a fallback for messages that don't match a configured channel key.
 
 ## Setup
 

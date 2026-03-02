@@ -21,6 +21,54 @@ class MeshCoreBleClient:
         self._queue: asyncio.Queue[ChannelMessage] | None = None
         self._subscription = None
         self._auto_fetch_started = False
+        self._channel_name_by_index: dict[str, str] = {}
+
+    async def _load_channel_name_map(self) -> None:
+        if not self._mesh:
+            return
+
+        channel_map: dict[str, str] = {}
+
+        info_event = await self._mesh.commands.send_device_query()
+        if info_event.type == EventType.ERROR:
+            _logger.warning("Failed to query device info for channel map: %s", info_event.payload)
+            self._channel_name_by_index = channel_map
+            return
+
+        info_payload = info_event.payload if isinstance(info_event.payload, dict) else {}
+        max_channels_raw = info_payload.get("max_channels", 0)
+        try:
+            max_channels = int(max_channels_raw)
+        except (TypeError, ValueError):
+            max_channels = 0
+
+        for channel_idx in range(max_channels):
+            channel_event = await self._mesh.commands.get_channel(channel_idx)
+            if channel_event.type == EventType.ERROR:
+                continue
+
+            payload = channel_event.payload if isinstance(channel_event.payload, dict) else {}
+            idx_raw = payload.get("channel_idx", channel_idx)
+            try:
+                idx = str(int(idx_raw))
+            except (TypeError, ValueError):
+                idx = str(channel_idx)
+
+            name_raw = payload.get("channel_name")
+            if name_raw is None:
+                continue
+
+            name = str(name_raw).strip()
+            if not name:
+                continue
+
+            channel_map[idx] = name
+
+        self._channel_name_by_index = channel_map
+        if channel_map:
+            _logger.info("Loaded channel map from device: %s", channel_map)
+        else:
+            _logger.warning("No channel names returned from device; rules will use index or '*' fallback")
 
     async def connect(self) -> None:
         _logger.info("Connecting to companion node via meshcore")
@@ -35,12 +83,16 @@ class MeshCoreBleClient:
             raise RuntimeError("Failed to connect to MeshCore node")
 
         self._queue = asyncio.Queue()
+        await self._load_channel_name_map()
 
         async def on_channel_message(event) -> None:
             payload = event.payload if isinstance(event.payload, dict) else {}
             raw_text = str(payload.get("text", ""))
             sender = str(payload.get("pubkey_prefix", "unknown"))
             text = raw_text
+            channel_idx = payload.get("channel_idx")
+            channel_idx_str = str(channel_idx if channel_idx is not None else "")
+            channel_name = self._channel_name_by_index.get(channel_idx_str)
 
             if ": " in raw_text:
                 parsed_sender, parsed_text = raw_text.split(": ", 1)
@@ -49,7 +101,8 @@ class MeshCoreBleClient:
                     text = parsed_text
 
             message = ChannelMessage(
-                channel=str(payload.get("channel_idx", "")),
+                channel=channel_idx_str,
+                channel_name=channel_name,
                 sender=sender,
                 text=text,
                 message_id=str(payload.get("sender_timestamp")) if payload.get("sender_timestamp") is not None else None,
@@ -75,6 +128,7 @@ class MeshCoreBleClient:
             await self._mesh.disconnect()
         self._mesh = None
         self._queue = None
+        self._channel_name_by_index = {}
         _logger.info("MeshCore disconnected")
 
     async def send_message(self, outbound: OutboundMessage) -> None:

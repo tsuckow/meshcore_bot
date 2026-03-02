@@ -7,6 +7,7 @@ from typing import Optional
 @dataclass(slots=True)
 class ChannelMessage:
     channel: str
+    channel_name: str | None
     sender: str
     text: str
     message_id: Optional[str] = None
