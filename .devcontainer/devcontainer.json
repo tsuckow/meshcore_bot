@@ -1,0 +1,26 @@
+{
+    "name": "Python (Bluetooth)",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    // Grant Bluetooth access via D-Bus and device nodes
+    "runArgs": [
+        "--net=host",
+        "--cap-add=NET_ADMIN",
+        "--cap-add=NET_RAW",
+        "--volume=/var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python"
+            }
+        }
+    },
+    "postCreateCommand": "pip install --user -r requirements.txt 2>/dev/null || true",
+    "remoteUser": "vscode"
+}
